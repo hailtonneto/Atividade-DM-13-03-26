@@ -1,180 +1,127 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import * as Updates from 'expo-updates';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-type UpdateInProgressProps = {
+type Props = {
   darkMode?: boolean;
 };
 
-type NewsItem = {
+type FeedItem = {
   id: string;
-  app: string;
-  title: string;
-  body: string;
-  time: string;
+  source: string;
+  headline: string;
+  description: string;
+  timestamp: string;
 };
 
-const NEWS: NewsItem[] = [
+const FEED: FeedItem[] = [
   {
-    id: '1',
-    app: 'Release Center',
-    title: 'Patch 1.0.1 preparado',
-    body: 'Correção no fluxo de login em dispositivos com conexão instável.',
-    time: 'Agora',
+    id: 'a1',
+    source: 'Deploy Center',
+    headline: 'Patch 1.0.2 liberado',
+    description: 'Ajuste no fluxo de autenticação em redes instáveis.',
+    timestamp: 'Agora',
   },
   {
-    id: '2',
-    app: 'Infra Mobile',
-    title: 'Atualização de desempenho',
-    body: 'Cache de notícias otimizado para reduzir carregamento inicial.',
-    time: '2 min',
+    id: 'a2',
+    source: 'Infra Mobile',
+    headline: 'Melhoria de performance',
+    description: 'Cache otimizado para reduzir tempo de abertura.',
+    timestamp: '3 min',
   },
   {
-    id: '3',
-    app: 'QA Watch',
-    title: 'Hotfix em validação',
-    body: 'Equipe testando ajuste de notificação push para iOS 18.',
-    time: '6 min',
+    id: 'a3',
+    source: 'QA Monitor',
+    headline: 'Hotfix em testes',
+    description: 'Equipe validando correção de push notifications no iOS.',
+    timestamp: '7 min',
   },
   {
-    id: '4',
-    app: 'Build Monitor',
-    title: 'OTA pronto para envio',
-    body: 'Pacote incremental pronto para distribuição sem atualização de loja.',
-    time: '12 min',
+    id: 'a4',
+    source: 'Build Tracker',
+    headline: 'Pacote OTA pronto',
+    description: 'Atualização incremental disponível sem necessidade de loja.',
+    timestamp: '15 min',
   },
 ];
 
-const lightPalette = {
-  accent: '#3E6DF8',
-  bg: '#EAF0FF',
-  border: 'rgba(123,147,214,0.35)',
-  glass: 'rgba(255,255,255,0.62)',
-  glassBorder: 'rgba(255,255,255,0.85)',
-  panel: 'rgba(255,255,255,0.54)',
-  text: '#0E1A38',
-  textMuted: '#4E5F88',
-  textSoft: '#5F6F98',
+const lightTheme = {
+  accent: '#4A75F0',
+  bg: '#F0F4FF',
+  border: 'rgba(120,140,210,0.3)',
+  card: 'rgba(255,255,255,0.7)',
+  text: '#0D1935',
+  textMuted: '#506090',
+  textSoft: '#6A7AA5',
 };
 
-const darkPalette = {
-  accent: '#6E8CFF',
-  bg: '#10182A',
-  border: 'rgba(119,143,226,0.4)',
-  glass: 'rgba(23,34,56,0.68)',
-  glassBorder: 'rgba(128,153,229,0.42)',
-  panel: 'rgba(17,27,46,0.72)',
-  text: '#F2F6FF',
-  textMuted: '#AFC0EC',
-  textSoft: '#95A7D4',
+const darkTheme = {
+  accent: '#7A92FF',
+  bg: '#121C30',
+  border: 'rgba(130,150,230,0.35)',
+  card: 'rgba(25,35,55,0.7)',
+  text: '#F5F8FF',
+  textMuted: '#B0C2ED',
+  textSoft: '#9AAAD8',
 };
 
-export function UpdateInProgress({ darkMode = false }: UpdateInProgressProps) {
-  const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
-  const [otaMessage, setOtaMessage] = useState('OTA pronto para fixes rápidos.');
-  const [isFetchingNews, setIsFetchingNews] = useState(true);
+export function UpdateInProgress({ darkMode = false }: Props) {
+  const [otaStatus] = useState('OTA disponível para correções rápidas.');
+  const [loadingFeed, setLoadingFeed] = useState(true);
 
-  const palette = darkMode ? darkPalette : lightPalette;
+  const theme = darkMode ? darkTheme : lightTheme;
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      setIsFetchingNews(false);
-    }, 2200);
+      setLoadingFeed(false);
+    }, 2000);
 
     return () => clearTimeout(timer);
   }, []);
 
-  const handleMockNewsSync = () => {
-    if (isFetchingNews) {
-      return;
-    }
+  const refreshFeed = () => {
+    if (loadingFeed) return;
 
-    setIsFetchingNews(true);
+    setLoadingFeed(true);
     setTimeout(() => {
-      setIsFetchingNews(false);
-    }, 2200);
-  };
-
-  const handleOtaFix = async () => {
-    if (isCheckingUpdate) {
-      return;
-    }
-
-    if (__DEV__) {
-      setOtaMessage('OTA disponível no build de produção (preview/release).');
-      return;
-    }
-
-    setIsCheckingUpdate(true);
-
-    try {
-      setOtaMessage('Verificando novas correções OTA...');
-      const update = await Updates.checkForUpdateAsync();
-
-      if (!update.isAvailable) {
-        setOtaMessage('Nenhum fix OTA novo encontrado.');
-        return;
-      }
-
-      setOtaMessage('Fix OTA encontrado. Baixando pacote...');
-      await Updates.fetchUpdateAsync();
-      setOtaMessage('Fix aplicado. Reiniciando app...');
-      await Updates.reloadAsync();
-    } catch {
-      setOtaMessage('Não foi possível validar OTA agora. Tente novamente.');
-    } finally {
-      setIsCheckingUpdate(false);
-    }
+      setLoadingFeed(false);
+    }, 1800);
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: palette.bg, borderColor: palette.border }]}>
-      <Text style={[styles.title, { color: palette.text }]}>Atualização em Andamento</Text>
+    <View style={[styles.container, { backgroundColor: theme.bg, borderColor: theme.border }]}>
+      <Text style={[styles.title, { color: theme.text }]}>Processo de Atualização</Text>
 
-      <View style={[styles.otaPanel, { backgroundColor: palette.panel, borderColor: palette.border }]}>
-        <Text style={[styles.otaTitle, { color: palette.textMuted }]}>OTA para fixes rápidos</Text>
-        <Pressable
-          onPress={handleOtaFix}
-          style={({ pressed }) => [
-            styles.otaButton,
-            { backgroundColor: palette.accent, opacity: pressed ? 0.88 : 1 },
-          ]}>
-          <Text style={styles.otaButtonText}>
-            {isCheckingUpdate ? 'Verificando OTA...' : 'Buscar correções OTA'}
-          </Text>
-        </Pressable>
-        <Text style={[styles.otaMessage, { color: palette.text }]}>{otaMessage}</Text>
+      <View style={[styles.otaPanel, { backgroundColor: theme.card, borderColor: theme.border }]}>
+        <Text style={[styles.otaTitle, { color: theme.textMuted }]}>Status OTA</Text>
+        <Text style={[styles.otaMessage, { color: theme.text }]}>{otaStatus}</Text>
       </View>
 
       <ScrollView
-        contentContainerStyle={styles.newsContent}
-        onScrollBeginDrag={handleMockNewsSync}
+        contentContainerStyle={styles.feedContent}
+        onScrollBeginDrag={refreshFeed}
         showsVerticalScrollIndicator={false}
-        style={styles.newsScroll}>
-        {NEWS.map((item) => (
+        style={styles.feedScroll}>
+        {FEED.map((item) => (
           <View
             key={item.id}
             style={[
-              styles.newsCard,
-              {
-                backgroundColor: palette.glass,
-                borderColor: palette.glassBorder,
-              },
+              styles.feedCard,
+              { backgroundColor: theme.card, borderColor: theme.border },
             ]}>
-            <View style={styles.newsTopRow}>
-              <Text style={[styles.newsApp, { color: palette.textMuted }]}>{item.app}</Text>
-              <Text style={[styles.newsTime, { color: palette.textMuted }]}>{item.time}</Text>
+            <View style={styles.feedTopRow}>
+              <Text style={[styles.feedSource, { color: theme.textMuted }]}>{item.source}</Text>
+              <Text style={[styles.feedTime, { color: theme.textMuted }]}>{item.timestamp}</Text>
             </View>
-            <Text style={[styles.newsTitle, { color: palette.text }]}>{item.title}</Text>
-            <Text style={[styles.newsBody, { color: palette.textSoft }]}>{item.body}</Text>
+            <Text style={[styles.feedHeadline, { color: theme.text }]}>{item.headline}</Text>
+            <Text style={[styles.feedDescription, { color: theme.textSoft }]}>{item.description}</Text>
           </View>
         ))}
       </ScrollView>
 
       <View style={styles.loadingRow}>
-        <ActivityIndicator color={palette.accent} size="small" />
-        <Text style={[styles.loadingLabel, { color: palette.textMuted }]}>
-          {isFetchingNews ? 'Recebendo novas atualizações...' : 'Atualizado. Aguardando novas notícias...'}
+        <ActivityIndicator color={theme.accent} size="small" />
+        <Text style={[styles.loadingLabel, { color: theme.textMuted }]}>
+          {loadingFeed ? 'Carregando novidades...' : 'Feed atualizado.'}
         </Text>
       </View>
     </View>
@@ -183,98 +130,82 @@ export function UpdateInProgress({ darkMode = false }: UpdateInProgressProps) {
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: 24,
+    borderRadius: 20,
     borderWidth: 1,
     flex: 1,
-    gap: 14,
-    padding: 16,
+    gap: 12,
+    padding: 14,
   },
   title: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: '700',
   },
   otaPanel: {
-    borderRadius: 18,
+    borderRadius: 16,
     borderWidth: 1,
-    gap: 8,
-    padding: 12,
+    gap: 6,
+    padding: 10,
   },
   otaTitle: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '600',
-    letterSpacing: 0.2,
     textTransform: 'uppercase',
-  },
-  otaButton: {
-    alignItems: 'center',
-    borderRadius: 999,
-    justifyContent: 'center',
-    minHeight: 38,
-    paddingHorizontal: 14,
-  },
-  otaButtonText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '700',
   },
   otaMessage: {
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  newsScroll: {
-    borderRadius: 18,
-    flex: 1,
-  },
-  newsContent: {
-    gap: 10,
-    paddingBottom: 8,
-    paddingTop: 4,
-  },
-  newsCard: {
-    borderRadius: 18,
-    borderWidth: 1,
-    minHeight: 92,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.12,
-    shadowRadius: 18,
-  },
-  newsTopRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 5,
-  },
-  newsApp: {
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 0.25,
-    textTransform: 'uppercase',
-  },
-  newsTime: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  newsTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-    marginBottom: 4,
-  },
-  newsBody: {
     fontSize: 13,
     lineHeight: 18,
   },
-  loadingRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
+  feedScroll: {
+    borderRadius: 16,
+    flex: 1,
+  },
+  feedContent: {
     gap: 8,
+    paddingBottom: 6,
+    paddingTop: 2,
+  },
+  feedCard: {
+    borderRadius: 16,
+    borderWidth: 1,
+    minHeight: 88,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.1,
+    shadowRadius: 14,
+  },
+  feedTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
+  feedSource: {
+    fontSize: 11,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+  },
+  feedTime: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  feedHeadline: {
+    fontSize: 14,
+    fontWeight: '700',
+    marginBottom: 3,
+  },
+  feedDescription: {
+    fontSize: 12,
+    lineHeight: 16,
+  },
+  loadingRow: {
+    flexDirection: 'row',
+    gap: 6,
     justifyContent: 'center',
-    minHeight: 28,
+    minHeight: 26,
   },
   loadingLabel: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '600',
   },
 });
