@@ -4,3 +4,9 @@
 
 expo-env.d.ts
 # @end expo-cli
+
+.expo
+.expo-shared
+node_modules
+dist
+build
